@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ajouter un chef</title>
+</head>
+<body>
+    <div class="container">
+        
+    <h2>Systeme des chefs</h2>
+  
+    <form id="chefForm">
+        <label for="nom">Nom :</label><br>
+        <input type="text" id="nom" name="nom" required><br>
+        <label for="specialite">Spécialité :</label><br>
+        <input type="text" id="specialite" name="specialite" required><br>
+        <label for="login">Login :</label><br>
+        <input type="text" id="login" name="login" required><br>
+        <label for="pwd">Mot de passe :</label><br>
+        <input type="password" id="pwd" name="pwd" required><br>
+        <button type="submit">Ajouter Chef</button>
+    </form>
+    <a href="formulaire.html">si tu est un utilisateur click ici</a>
+    <div id="error-message" style="color: red;"></div>
+    </div>
+    
+
+    <script>
+        document.getElementById("chefForm").addEventListener("submit", function(event) {
+            event.preventDefault();
+        
+            var nom = document.getElementById("nom").value;
+            var specialite = document.getElementById("specialite").value;
+            var login = document.getElementById("login").value;
+            var pwd = document.getElementById("pwd").value;
+        
+            var chefData = {
+                nom: nom,
+                specialite: specialite,
+                login: login,
+                pwd: pwd
+            };
+        
+            // Vérifier le mot de passe avant de faire la requête
+            if (pwd !== 'admin123') {
+                document.getElementById('error-message').innerText = 'Le mot de passe est incorrect.';
+                return;
+            }
+        
+            fetch('http://localhost:8096/chef/ajouterChef', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(chefData)
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Erreur lors de l\'ajout du chef : ' + response.status);
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data && data.idChef) {
+                    window.location.href = 'recette.html?id=' + data.idChef; // Rediriger vers la page des recettes avec l'ID du chef ajouté
+                }
+            })
+            .catch(error => {
+                if (error.message.includes('400') && error.message.includes('login')) {
+                    var chefId = error.message.match(/\d+/)[0]; // Récupérer l'ID du chef existant depuis le message d'erreur
+                    window.location.href = 'recette.html?id=' + chefId; // Rediriger vers la page des recettes avec l'ID du chef existant
+                } else {
+                    document.getElementById('error-message').innerText = 'Erreur lors de l\'ajout du chef : ' + error.message;
+                }
+            });
+        });
+    </script>
+
+</body>
+</html>
+<style>body {
+    background-image: url("—Pngtree—e-commerce minimalist dark green food_1107732.jpg");
+    background-size: 100% auto; /* Sets the background image width to 100% and height to auto to maintain aspect ratio */
+    background-repeat: no-repeat; /* Prevents the background image from repeating */
+    background-position: center; /* Centers the background image */
+    margin-right: 50px;
+    padding: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+}
+
+
+
+
+.container {
+    width: 300px;
+    background-color: rgba(255, 255, 255, 0.2); /* Transparent background */
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 0 10px white(0, 0, 0, 0.1);
+    margin: 20px auto; /* Center the container */
+}
+h2 {
+    color: white;
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+label {
+    font-weight: bold;
+    display: block;
+    margin-bottom: 5px;
+}
+
+input[type="text"],
+input[type="password"] {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    box-sizing: border-box;
+}
+
+button {
+    width: 100%;
+    background-color: #4caf50;
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+button:hover {
+    background-color: #45a049;
+}
+
+button:active {
+    background-color: #3e8e41;
+}
+a,label{
+color: white;}
+</style>

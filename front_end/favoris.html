@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Favoris</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+    <style>
+        body {
+            background-image: url("6ecdeb6db0d9daa8128c5a0b50db8db4.jpg");
+        }
+        nav {
+            background-color: #333;
+            padding: 10px;
+        }
+        nav ul {
+            list-style-type: none;
+            margin: 0;
+            padding: 0;
+        }
+        nav ul li {
+            display: inline;
+        }
+        nav ul li a {
+            color: white;
+            text-decoration: none;
+            padding: 10px;
+        }
+        .recettes-container {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            grid-gap: 20px;
+        }
+        .recette {
+            background-color: #f9f9f9;
+            border: 1px solid #ccc;
+            padding: 10px;
+        }
+        .recette h3 {
+            margin-top: 0;
+        }
+        button {
+            background-color: #4caf50;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-right: 10px;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        button:active {
+            background-color: #3e8e41;
+        }
+        button.favorite {
+            background-color: #ff9800;
+        }
+        button.favorite:hover {
+            background-color: #e68a00;
+        }
+        button.favorite:active {
+            background-color: #d58000;
+        }
+        .fas.fa-heart {
+            color: red;
+        }
+    </style>
+</head>
+<body>
+    <nav>
+        <ul>
+            <li><a href="#" id="favorisLink">Favoris</a></li>
+            <li><a href="#" id="recettesLink">Recettes</a></li>
+        </ul>
+    </nav>
+
+    <h2>Favoris de l'utilisateur</h2>
+    <p>ID de l'utilisateur: <span id="userId"></span></p>
+
+    <!-- Conteneur pour les recettes -->
+    <div class="recettes-container" id="recettesContainer"></div>
+
+    <!-- Script JavaScript -->
+    <script>
+    // Fonction pour obtenir l'ID utilisateur à partir de l'URL
+    window.onload = function() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const userId = urlParams.get('id');
+        document.getElementById('userId').textContent = userId;
+
+        // Mettre à jour les liens de navigation pour inclure l'ID utilisateur
+        document.getElementById('favorisLink').href = `favoris.html?id=${userId}`;
+        document.getElementById('recettesLink').href = `hi.html?id=${userId}`;
+
+        fetchRecettesFavoris(); // Appel de la fonction pour afficher les recettes favorites
+    };
+
+    // Fonction pour basculer l'état "J'adore"
+    function toggleLove(button, recetteId, currentFavori) {
+        const newFavoriStatus = !currentFavori;
+        const url = `http://localhost:8096/recettes/${recetteId}/favori?favori=${newFavoriStatus}`;
+        console.log(`Request URL: ${url}`); // Log the URL being requested
+
+        fetch(url, { method: 'PUT' })
+            .then(response => {
+                if (!response.ok) {
+                    console.error('Network response was not ok', response.statusText);
+                    throw new Error('Network response was not ok ' + response.statusText);
+                }
+                return response.json();
+            })
+            .then(() => {
+                button.classList.toggle('active', newFavoriStatus);
+                button.innerHTML = newFavoriStatus 
+                    ? '<i class="fas fa-heart"></i> J\'adore' 
+                    : '<i class="far fa-heart"></i> J\'adore';
+            })
+            .catch(error => {
+                console.error('Erreur lors de la mise à jour du favori:', error);
+                alert('Erreur lors de la mise à jour du favori. Veuillez réessayer.');
+            });
+    }
+
+    // Fonction pour récupérer et afficher les recettes favorites
+    function fetchRecettesFavoris() {
+        fetch('http://localhost:8096/recettes') // Assurez-vous de modifier l'URL en fonction de votre backend
+            .then(response => {
+                if (!response.ok) {
+                    console.error('Network response was not ok', response.statusText);
+                    throw new Error('Network response was not ok ' + response.statusText);
+                }
+                return response.json();
+            })
+            .then(data => {
+                const recettesContainer = document.getElementById("recettesContainer");
+                recettesContainer.innerHTML = ''; // Efface le contenu précédent
+                data.forEach(recette => {
+                    if (recette.favoris) { // Afficher uniquement les recettes favorites
+                        const recetteDiv = document.createElement("div");
+                        recetteDiv.classList.add("recette");
+
+                        const image = document.createElement("img");
+                        image.src = "design-an-editable-menu-for-your-restaurant-or-coffee-shop.png";
+                        image.style.width = "400px";
+                        image.style.height = "300px";
+                        recetteDiv.appendChild(image);
+
+                        // Création et ajout d'éléments HTML pour chaque recette
+                        const nom = document.createElement("h3");
+                        nom.textContent = recette.nom;
+                        recetteDiv.appendChild(nom);
+
+                        const description = document.createElement("p");
+                        description.textContent = recette.description;
+                        recetteDiv.appendChild(description);
+
+                        const instruction = document.createElement("p");
+                        instruction.textContent = recette.instruction;
+                        recetteDiv.appendChild(instruction);
+
+                        const adoreButton = document.createElement("button");
+                        adoreButton.classList.add('active');
+                        adoreButton.setAttribute("onclick", `toggleLove(this, ${recette.idRecette}, ${recette.favoris})`);
+                        adoreButton.innerHTML = '<i class="fas fa-heart"></i> J\'adore'; // Icône de cœur plein pour favoris
+                        recetteDiv.appendChild(adoreButton);
+
+                        // Ajouter la recetteDiv au conteneur des recettes
+                        recettesContainer.appendChild(recetteDiv);
+                    }
+                });
+            })
+            .catch(error => {
+                console.error('Erreur lors de la récupération des recettes:', error);
+                alert('Erreur lors de la récupération des recettes. Veuillez réessayer.');
+            });
+    }
+    </script>
+</body>
+</html>

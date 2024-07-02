@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Welcome Utilisateur</title>
+    <!-- Lien vers Font Awesome pour les icônes -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            color: #333;
+            margin: 0;
+            padding: 0;
+        }
+
+        header {
+            background-color: #007bff;
+            color: white;
+            padding: 1rem;
+            text-align: center;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 2rem auto;
+            background: white;
+            padding: 2rem;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            border-radius: 8px;
+        }
+
+        h2 {
+            color: #007bff;
+        }
+
+        .commentaire {
+            padding: 1rem;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .commentaire:last-child {
+            border-bottom: none;
+        }
+
+        .commentaire-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+
+        .commentaire-header img {
+            border-radius: 50%;
+            margin-right: 0.5rem;
+        }
+
+        .commentaire-body {
+            margin-left: 2.5rem;
+        }
+
+        .commentaire-date {
+            color: #888;
+            font-size: 0.9rem;
+        }
+
+        footer {
+            background-color: #007bff;
+            color: white;
+            text-align: center;
+            padding: 1rem 0;
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+        }
+
+        .commentaire-actions {
+            margin-left: auto;
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .commentaire-actions button {
+            background: none;
+            border: none;
+            color: #007bff;
+            cursor: pointer;
+        }
+
+        .commentaire-actions button:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Bienvenue Utilisateur</h1>
+    </header>
+
+    <div class="container">
+        <!-- Nouvelle section pour afficher les commentaires -->
+        <div id="commentairesSection" style="display: none;">
+            <h2>Commentaires</h2>
+            <div id="commentairesContainer"></div>
+        </div>
+    </div>
+
+    <footer>
+        &copy; 2024 Votre Site de Recettes
+    </footer>
+
+    <!-- Script JavaScript -->
+    <script>
+        // Fonction pour récupérer l'ID de la recette et l'ID de l'utilisateur à partir de l'URL
+        function getParamsFromUrl() {
+            const params = new URLSearchParams(window.location.search);
+            return {
+                recetteId: params.get('id'),
+                utilisateurId: params.get('id2')
+            };
+        }
+
+        // Fonction pour récupérer et afficher les commentaires d'une recette spécifique
+        function afficherCommentaires(recetteId, utilisateurId) {
+            const url = `http://localhost:8096/recettes/${recetteId}/commentaires`;
+            console.log("URL de l'API pour récupérer les commentaires :", url);
+            fetch(url)
+                .then(response => response.json())
+                .then(data => {
+                    console.log("Données des commentaires:", data);
+                    const commentairesContainer = document.getElementById("commentairesContainer");
+                    commentairesContainer.innerHTML = ''; // Efface le contenu précédent
+
+                    data.forEach(commentaire => {
+                        console.log("ID de l'utilisateur du commentaire :", commentaire.utilisateurId);
+                        console.log("ID de l'utilisateur récupéré depuis l'URL :", utilisateurId);
+                        console.log("Comparaison des IDs :", commentaire.utilisateurId === parseInt(utilisateurId));
+                        const commentaireDiv = document.createElement("div");
+                        commentaireDiv.classList.add("commentaire");
+
+                        const headerDiv = document.createElement("div");
+                        headerDiv.classList.add("commentaire-header");
+
+                        const avatarImg = document.createElement("img");
+                        avatarImg.src = "https://via.placeholder.com/40";
+                        avatarImg.alt = "Avatar";
+
+                        const nameSpan = document.createElement("span");
+                        nameSpan.textContent = commentaire.utilisateurLogin;
+
+                        headerDiv.appendChild(avatarImg);
+                        headerDiv.appendChild(nameSpan);
+                        utilisateurId = parseInt(utilisateurId);
+                        // Ajout des boutons de modification et de suppression uniquement si l'utilisateur est l'auteur du commentaire
+                        if (commentaire.utilisateurId === utilisateurId) {
+                            console.log("L'utilisateur est l'auteur du commentaire. Ajout des boutons.");
+                            const actionsDiv = document.createElement("div");
+                            actionsDiv.classList.add("commentaire-actions");
+
+                            const editButton = document.createElement("button");
+                            editButton.innerHTML = '<i class="fas fa-edit"></i>';
+                            editButton.onclick = () => modifierCommentaire(commentaire.idCommentaire);
+
+                            const deleteButton = document.createElement("button");
+                            deleteButton.innerHTML = '<i class="fas fa-trash"></i>';
+                            deleteButton.onclick = function() {
+                                const idCommentaire = commentaire.idCommentaire; // Assurez-vous que commentaire.idCommentaire est correctement récupéré
+                                supprimerCommentaire(idCommentaire);
+                            };
+                            
+
+                            actionsDiv.appendChild(editButton);
+                            actionsDiv.appendChild(deleteButton);
+
+                            headerDiv.appendChild(actionsDiv);
+                        } else {
+                            console.log("L'utilisateur n'est pas l'auteur du commentaire. Aucun bouton ajouté.");
+                        }
+
+                        const bodyDiv = document.createElement("div");
+                        bodyDiv.classList.add("commentaire-body");
+
+                        const dateSpan = document.createElement("span");
+                        dateSpan.classList.add("commentaire-date");
+                        dateSpan.textContent = new Date(commentaire.date).toLocaleDateString();
+
+                        const contentP = document.createElement("p");
+                        contentP.textContent = commentaire.contenu;
+
+                        bodyDiv.appendChild(dateSpan);
+                        bodyDiv.appendChild(contentP);
+
+                        commentaireDiv.appendChild(headerDiv);
+                        commentaireDiv.appendChild(bodyDiv);
+
+                        commentairesContainer.appendChild(commentaireDiv);
+                    });
+
+                    // Afficher la section des commentaires une fois qu'ils sont chargés
+                    document.getElementById("commentairesSection").style.display = "block";
+                })
+                .catch(error => {
+                    console.error('Erreur lors de la récupération des commentaires:', error);
+                    alert('Erreur lors de la récupération des commentaires. Veuillez réessayer.');
+                });
+        }
+        function modifierCommentaire(idCommentaire) {
+            // Demander à l'utilisateur de saisir le nouveau contenu
+            const nouveauContenu = prompt("Veuillez saisir le nouveau contenu du commentaire :");
+            
+            // Vérifier si l'utilisateur a saisi quelque chose
+            if (nouveauContenu !== null) {
+                // Mettre à jour le commentaire en envoyant une requête PATCH au backend
+                const url = `http://localhost:8096/recettes/update/${idCommentaire}`;
+                fetch(url, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(nouveauContenu) // Envoyer le nouveau contenu directement sans envelopper dans un objet
+                })
+                .then(response => {
+                    if (response.ok) {
+                        console.log(`Commentaire avec l'ID: ${idCommentaire} mis à jour avec succès.`);
+                        alert('Le commentaire a été mis à jour avec succès.');
+        
+                        // Recharger les commentaires après la mise à jour
+                        const { recetteId, utilisateurId } = getParamsFromUrl();
+                        afficherCommentaires(recetteId, utilisateurId);
+                    } else {
+                        console.error('Erreur lors de la mise à jour du commentaire.');
+                        alert('Erreur lors de la mise à jour du commentaire. Veuillez réessayer.');
+                    }
+                })
+                .catch(error => {
+                    console.error('Erreur lors de la mise à jour du commentaire :', error);
+                    alert('Erreur lors de la mise à jour du commentaire. Veuillez réessayer.');
+                });
+            }
+        }
+        
+        // Fonction pour supprimer un commentaire
+        function supprimerCommentaire(idCommentaire) {
+            const url = `http://localhost:8096/recettes/commentaires/${idCommentaire}`;
+            fetch(url, {
+                method: 'DELETE'
+            })
+            .then(response => {
+                if (response.ok) {
+                    console.log(`Commentaire avec l'ID: ${idCommentaire} supprimé avec succès.`);
+                    alert('Le commentaire a été supprimé avec succès.'); // Alerte de succès
+        
+                    // Recharger les commentaires après la suppression
+                    const { recetteId, utilisateurId } = getParamsFromUrl();
+                    afficherCommentaires(recetteId, utilisateurId);
+                } else {
+                    console.error('Erreur lors de la suppression du commentaire.');
+                    alert('Erreur lors de la suppression du commentaire. Veuillez réessayer.');
+                }
+            })
+            .catch(error => {
+                console.error('Erreur lors de la suppression du commentaire:', error);
+                alert('Erreur lors de la suppression du commentaire. Veuillez réessayer.');
+            });
+        }
+        
+
+        // Exécuter le script une fois que la page est chargée
+        window.onload = function() {
+            const { recetteId, utilisateurId } = getParamsFromUrl();
+            if (recetteId && utilisateurId) {
+                afficherCommentaires(recetteId, utilisateurId);
+            } else {
+                console.error('Aucun ID de recette ou d\'utilisateur trouvé dans l\'URL');
+            }
+        };
+    </script>
+</body>
+</html>

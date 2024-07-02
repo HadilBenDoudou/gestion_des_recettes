@@ -1,0 +1,575 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ajouter une recette</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body class="background">
+    <nav>
+        <div class="container2">
+            <h1>Gestion des recettes</h1>
+            <ul>
+                <li><a href="#" id="ajouterRecetteLink">Ajouter une recette</a></li>
+                <li><a href="#" id="listeRecettesLink">Liste des recettes</a></li>
+<li><a href="#" id="toutesRecettesLink">Consulter toutes les recettes</a></li>
+<li><a href="#" id="deconnexionLink">Déconnexion</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    
+       
+    <div class="container4" id="ajouterRecetteForm" style="display:none;">
+        <h1>Ajouter une recette</h1>
+        <form id="recetteForm">
+            <label for="nom">Nom de la recette :</label><br>
+            <input type="text" id="nom" name="nom" placeholder="Saisir votre nom"><br>
+            <label for="description">Description :</label><br>
+            <textarea id="description" name="description" placeholder="Saisir votre description"></textarea><br>
+            <label for="instruction">Instruction :</label><br>
+            <textarea id="instruction" name="instruction" placeholder="Saisir votre instruction"></textarea><br>
+            <!-- Champ masqué pour stocker l'id_chef -->
+            <input type="hidden" id="chefId" name="chefId">
+            <button type="submit">Ajouter</button>
+        </form>
+    </div>
+
+    <div id="listeRecettes" style="display:none;">
+        <div class="search-container">
+            <input type="text" id="searchInput" oninput="searchRecipes()" placeholder="Entrez un terme de recherche">
+        </div>
+        
+        <h1>Liste des recettes</h1>
+        <div class="recettes-container" id="recettesContainer"></div>
+    </div>
+    
+    <div id="modificationFormContainer" class="hidden" style="display:none;">
+        <h2>Modifier la recette</h2>
+        <form id="modificationForm">
+            <label for="modNom">Nom:</label>
+            <input type="text" id="modNom" name="nom" required>
+            <br>
+            <label for="modDescription">Description:</label>
+            <textarea id="modDescription" name="description" required></textarea>
+            <br>
+            <label for="modInstruction">Instruction:</label>
+            <textarea id="modInstruction" name="instruction" required></textarea>
+            <br>
+            <input type="hidden" id="modRecetteId">
+          <div class="row">
+            
+            <button type="submit" class="btn btn-success btn-block">Enregistrer</button>
+            <button type="button" onclick="cancelModification()" class="btn btn-danger btn-block">Annuler</button></div>
+        </form>
+    </div>
+   <script>
+    function searchRecipes() {
+        const searchTerm = document.getElementById("searchInput").value.toLowerCase();
+        const recettes = document.querySelectorAll(".recette");
+    
+        recettes.forEach(recette => {
+            const nom = recette.querySelector("h2").textContent.toLowerCase();
+            const description = recette.querySelector("p").textContent.toLowerCase(); // Sélectionner le premier paragraphe pour la description
+            const instruction = recette.querySelectorAll("p")[1].textContent.toLowerCase(); // Sélectionner le deuxième paragraphe pour l'instruction
+    
+            if (nom.includes(searchTerm) || description.includes(searchTerm) || instruction.includes(searchTerm)) {
+                recette.style.display = "block";
+            } else {
+                recette.style.display = "none";
+            }
+        });
+    }
+    document.getElementById("deconnexionLink").addEventListener("click", function(event) {
+        event.preventDefault(); // Empêche le comportement par défaut du lien
+    
+        // Effectuer les actions de déconnexion ici, par exemple, effacer les informations de session
+        // et rediriger l'utilisateur vers la page de connexion
+    
+        // Exemple de redirection
+        window.location.href = "formulaire.html";
+    });
+    
+</script>
+    
+    <script>
+        document.addEventListener("DOMContentLoaded", fetchRecettes);
+    
+        function getChefIdFromUrl() {
+            const params = new URLSearchParams(window.location.search);
+            return params.get('id_chef');
+        }
+    
+        function fetchRecettes() {
+            const chefId = getChefIdFromUrl();
+            if (!chefId) {
+                console.error("No id_chef found in the URL");
+                return;
+            }
+    
+            fetch(`http://localhost:8096/recettes/chef/${chefId}`)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok ' + response.statusText);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    const recettesContainer = document.getElementById("recettesContainer");
+                    recettesContainer.innerHTML = ''; // Clear previous content
+                    data.forEach(recette => {
+                        const recetteDiv = document.createElement("div");
+                        recetteDiv.style.width = "400px";
+                        recetteDiv.style.height = "550px";
+                        recetteDiv.classList.add("recette"); // Ajoutez cette ligne pour ajouter la classe "recette" à chaque div de recette
+                        
+    
+                        const image = document.createElement("img");
+                        image.src = "didi12.PNG";
+                        image.style.width = "400px";
+                        image.style.height = "300px";
+                        recetteDiv.appendChild(image);
+    
+                        const nom = document.createElement("h2");
+                        nom.textContent = "Nom de la recette : " + recette.nom; // Afficher le nom de la recette
+                        recetteDiv.appendChild(nom);
+    
+                        
+const description = document.createElement("p");
+description.textContent = "Description de la recette : " + recette.description; // Afficher la description de la recette
+recetteDiv.appendChild(description);
+
+const instruction = document.createElement("p");
+instruction.textContent = "Instruction de la recette : " + recette.instruction; // Afficher l'instruction de la recette
+recetteDiv.appendChild(instruction);
+    
+                        const modifierButton = document.createElement("button");
+                        modifierButton.textContent = "Modifier";
+                        modifierButton.classList.add("button", "modifier-button");
+                        modifierButton.addEventListener("click", () => {
+                            showModificationForm(recette);
+                        });
+                        recetteDiv.appendChild(modifierButton);
+    
+                        const supprimerButton = document.createElement("button");
+                        supprimerButton.textContent = "Supprimer";
+                        supprimerButton.classList.add("button", "supprimer-button");
+                        supprimerButton.addEventListener("click", () => {
+                            supprimerRecette(recette.idRecette);
+                        });
+                        recetteDiv.appendChild(supprimerButton);
+    
+                        recettesContainer.appendChild(recetteDiv);
+                    });
+                })
+                .catch(error => {
+                    console.error("Error fetching recipes:", error);
+                    const recettesContainer = document.getElementById("recettesContainer");
+                    recettesContainer.innerHTML = '<p>Error fetching recipes. Please try again later.</p>';
+                });
+        }
+    
+        function showModificationForm(recette) {
+            document.getElementById("modificationFormContainer").classList.remove("hidden");
+            document.getElementById("modNom").value = recette.nom;
+            document.getElementById("modDescription").value = recette.description;
+            document.getElementById("modInstruction").value = recette.instruction;
+            document.getElementById("modRecetteId").value = recette.idRecette;
+        }
+    
+        function cancelModification() {
+            document.getElementById("modificationFormContainer").classList.add("hidden");
+        }
+    
+        document.getElementById("modificationForm").addEventListener("submit", function(event) {
+            event.preventDefault();
+            const recetteId = document.getElementById("modRecetteId").value;
+            const updatedRecette = {
+                nom: document.getElementById("modNom").value,
+                description: document.getElementById("modDescription").value,
+                instruction: document.getElementById("modInstruction").value,
+            };
+            fetch(`http://localhost:8096/recettes/${recetteId}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(updatedRecette)
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok ' + response.statusText);
+                }
+                return response.json();
+            })
+            .then(data => {
+                alert('Recette mise à jour avec succès !');
+                document.getElementById("modificationFormContainer").classList.add("hidden");
+                fetchRecettes(); // Refresh the list of recipes
+            })
+            .catch(error => {
+                console.error('Error updating recipe:', error);
+            });
+        });
+        function supprimerRecette(idRecette) {
+            if (!confirm("Êtes-vous sûr de vouloir supprimer cette recette ?")) {
+                return;
+            }
+        
+            fetch(`http://localhost:8096/recettes/${idRecette}`, {
+                method: 'DELETE'
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('La suppression de la recette a échoué.');
+                }
+                return response.text();
+            })
+            .then(data => {
+                alert('Recette supprimée avec succès !');
+                // Actualiser la liste des recettes après la suppression
+                fetchRecettes();
+            })
+            .catch(error => {
+                console.error('Erreur lors de la suppression de la recette :', error);
+                alert('Erreur lors de la suppression de la recette. Veuillez réessayer.');
+            });
+        }
+        
+        function fetchToutesRecettes() {
+            fetch('http://localhost:8096/recettes') // Assurez-vous de modifier l'URL en fonction de votre backend
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok ' + response.statusText);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    const recettesContainer = document.getElementById("recettesContainer");
+                    recettesContainer.innerHTML = ''; // Efface le contenu précédent
+                    data.forEach(recette => {
+                       
+
+
+                        
+
+
+                        const recetteDiv = document.createElement("div");
+                        recetteDiv.style.width = "400px";
+                        recetteDiv.style.height = "550px";
+                        recetteDiv.classList.add("recette");
+    
+                        const image = document.createElement("img");
+                        image.src = "didi12.PNG";
+                        image.style.width = "400px";
+                        image.style.height = "300px";
+                        recetteDiv.appendChild(image);
+    
+                        const nom = document.createElement("h2");
+                        nom.textContent = "Nom de la recette : " + recette.nom; // Afficher le nom de la recette
+                        recetteDiv.appendChild(nom);
+    
+                        
+const description = document.createElement("p");
+description.textContent = "Description de la recette : " + recette.description; // Afficher la description de la recette
+recetteDiv.appendChild(description);
+
+const instruction = document.createElement("p");
+instruction.textContent = "Instruction de la recette : " + recette.instruction; // Afficher l'instruction de la recette
+recetteDiv.appendChild(instruction);
+                          // Ajouter la recetteDiv au conteneur des recettes
+                          recettesContainer.appendChild(recetteDiv);
+                    });
+                })
+                .catch(error => {
+                    console.error('Erreur lors de la récupération des recettes:', error);
+                    alert('Erreur lors de la récupération des recettes. Veuillez réessayer.');
+                });
+        }
+        
+    
+    </script>
+    
+    <script src="script2.js"></script>
+</body>
+</html><script>document.getElementById("ajouterRecetteLink").addEventListener("click", function() {
+    document.getElementById("ajouterRecetteForm").style.display = "block";
+    document.getElementById("listeRecettes").style.display = "none";
+    document.getElementById("modificationFormContainer").style.display = "none";
+    document.body.classList.add("background"); // Ajoute la classe de fond d'écran
+});
+
+document.getElementById("listeRecettesLink").addEventListener("click", function() {
+    document.getElementById("ajouterRecetteForm").style.display = "none";
+    document.getElementById("listeRecettes").style.display = "block";
+    document.body.classList.remove("background"); // Enlève la classe de fond d'écran
+});
+document.getElementById("listeRecettesLink").addEventListener("click", function() {
+    document.getElementById("ajouterRecetteForm").style.display = "none";
+    document.getElementById("modificationFormContainer").style.display = "block";
+    document.body.classList.remove("background"); // Enlève la classe de fond d'écran
+});
+document.getElementById("toutesRecettesLink").addEventListener("click", function() {
+    fetchToutesRecettes();
+});
+
+</script>
+<style>body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+}
+/* Style pour l'input de recherche */
+.search-container {
+    display: flex;
+    justify-content: center; /* Centrer horizontalement */
+    align-items: center; /* Centrer verticalement */
+    margin-bottom: 20px; /* Espacement sous le champ de recherche */
+}
+
+
+
+.search-container {
+    position: relative;
+}
+
+#searchInput {
+    width: 500px; /* Largeur de l'input */
+    padding: 10px 40px 10px 10px; /* Espacement interne avec plus de marge à droite pour l'icône */
+    border: 1px solid #ccc; /* Bordure */
+    border-radius: 4px; /* Coins arrondis */
+    font-size: 16px; /* Taille de la police */
+    background-image: url('84236.png'); /* Chemin de l'image */
+    background-size: 24px; /* Taille de l'image */
+    background-repeat: no-repeat; /* Ne pas répéter l'image */
+    background-position: calc(100% - 10px) center; /* Position de l'image à droite */
+    box-sizing: border-box; 
+    margin-top: 20px;/* La taille inclut le padding et la bordure */
+}
+
+
+
+
+/* Style pour l'input de recherche lorsqu'il est en focus */
+#searchInput:focus {
+    outline: none; /* Supprime la bordure de focus par défaut */
+    border-color: #3e8e41; /* Couleur de la bordure lorsqu'en focus */
+    box-shadow: 0 0 5px rgba(62, 142, 65, 0.5); /* Ombre portée lorsqu'en focus */
+}
+
+
+body.background {
+    background-image: url("111.PNG");
+    background-color: #EBF7E9;
+    background-size: 100% auto; /* Sets the background image width to 100% and height to auto to maintain aspect ratio */
+    background-repeat: no-repeat; /* Prevents the background image from repeating */
+}
+
+nav {
+    background-color: #3e8e41;
+    color: #fff;
+    padding: 10px 0;
+}
+
+nav .container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+h1 {
+    margin-top: 0;
+    color: #fff;
+}
+
+ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+}
+
+ul li {
+    margin-right: 20px;
+}
+
+ul li a {
+    color: #fff;
+    text-decoration: none;
+    font-weight: bold;
+}
+
+.container {
+    max-width: 800px;
+    margin: 20px auto;
+    padding: 20px;
+    background-color: rgba(255, 255, 255, 0.8);
+    border-radius: 8px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+.container4 {
+    max-width: 800px;
+    margin: 5px auto;
+    padding: 10px;
+   
+    border-radius: 8px;
+   
+}
+.container2 {
+    max-width: 800px;
+    margin: 20px auto;
+    padding: 20px;
+    background-color: #3e8e41;
+    border-radius: 8px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+label {
+    display: block;
+    margin-bottom: 5px;
+}
+
+textarea, input[type="text"] {
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
+
+button {
+    padding: 10px 20px;
+    background-color: #3e8e41;
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    margin-left: 310px;
+}
+
+button:hover {
+    background-color: #4ca84c;
+}
+
+#listeRecettes {
+    background-color: transparent; /* No background for the list of recipes */
+}
+</style>
+<style>
+    .recettes-container {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 20px; /* Espacement entre les blocs */
+    }
+    
+    .recette {
+        border: 1px solid #ccc; /* Bordure pour chaque bloc */
+        padding: 20px; /* Espacement interne */
+        border-radius: 8px; /* Coins arrondis */
+        background-color: #f9f9f9; /* Couleur de fond */
+    }
+    
+    .recette h2 {
+        margin-top: 0; /* Supprime la marge supérieure du titre */
+    }
+    
+    .recette button {
+        margin-top: 10px; /* Espacement entre les boutons et le contenu */
+    }
+    
+    .modifier-button {
+        background-color: #3e8e41;
+        color: #fff;
+        margin-right: 10px;
+    }
+    
+    .supprimer-button {
+        background-color: #dc3545;
+        color: #fff;
+    }
+    
+    .button-container {
+        position: absolute;
+        bottom: 10px;
+        left: 50%;
+        transform: translateX(-50%);}
+        #modificationFormContainer {
+            display: none;
+            max-width: 600px;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: #f9f9f9;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        
+        #modificationFormContainer h2 {
+            margin-top: 0;
+            font-size: 24px;
+            color: #333;
+        }
+        
+        #modificationForm {
+            margin-top: 20px;
+        }
+        #modificationForm2 {
+            display: flex;
+            /* Aligner verticalement les éléments sur la même ligne */
+        }
+        
+        
+        #modificationForm button {
+            padding: 10px 20px;
+            background-color: #3e8e41;
+            color: #fff;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-right: 10px;
+        }
+        
+        #modificationForm button:last-child {
+            margin-right: 0;
+            background-color: #dc3545;
+        }
+        
+        #modificationForm label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+            color: #666;
+        }
+        
+        #modificationForm input[type="text"],
+        #modificationForm textarea {
+            width: calc(100% - 20px);
+            padding: 10px;
+            margin-bottom: 15px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        
+        #modificationForm button {
+            padding: 10px 20px;
+            background-color: #3e8e41;
+            color: #fff;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-right: 10px;
+        }
+        
+        #modificationForm button:hover {
+            background-color: #4ca84c;
+        }
+        
+        #modificationForm button:last-child {
+            margin-right: 0;
+        }
+        
+        .hidden {
+            display: none !important;
+        }
+        
+</style>
